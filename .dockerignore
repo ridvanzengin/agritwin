@@ -1,0 +1,37 @@
+# Git history
+.git/
+
+# ETL data directories — large; raw data and processed Parquet are volume-mounted
+# at runtime, not baked into the image.
+agriTwin-etl/data/
+
+# ETL virtualenv
+agriTwin-etl/.venv/
+agriTwin-etl/venv/
+
+# App Postgres data volume — never goes into the image
+agriTwin-app/.pgdata/
+
+# App virtualenv
+agriTwin-app/.venv/
+agriTwin-app/venv/
+
+# Python bytecode and build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Secrets and local config
+.env
+*.env.local
+
+# macOS noise
+.DS_Store
+
+# Logs
+*.log
