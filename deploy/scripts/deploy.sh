@@ -7,9 +7,9 @@ set -euo pipefail
 cd /opt/agritwin
 
 echo "[deploy] Pulling latest code..."
-git pull origin master
-git -C agriTwin-app pull origin master
-git -C agriTwin-etl pull origin master
+git pull origin main
+git -C agriTwin-app pull origin main
+git -C agriTwin-etl pull origin main
 
 echo "[deploy] Building app image..."
 docker compose -p agritwin \

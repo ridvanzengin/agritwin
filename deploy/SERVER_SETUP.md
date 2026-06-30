@@ -29,9 +29,9 @@ ssh -T git@github.com
 
 ```bash
 mkdir -p /opt/agritwin
-git clone git@github.com:ridvanzengin/agritwin.git /opt/agritwin
-git clone git@github.com:ridvanzengin/agriTwin-app.git /opt/agritwin/agriTwin-app
-git clone git@github.com:ridvanzengin/agriTwin-etl.git /opt/agritwin/agriTwin-etl
+git clone -b main git@github.com:ridvanzengin/agritwin.git /opt/agritwin
+git clone -b main git@github.com:ridvanzengin/agriTwin-app.git /opt/agritwin/agriTwin-app
+git clone -b main git@github.com:ridvanzengin/agriTwin-etl.git /opt/agritwin/agriTwin-etl
 ```
 
 ---
