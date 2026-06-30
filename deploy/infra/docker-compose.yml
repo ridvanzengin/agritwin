@@ -1,0 +1,66 @@
+# Shared infrastructure for all apps on this VM.
+# Run: docker compose -p infra up -d
+# This compose project owns the "infra_proxy" network. All app compose projects
+# join it as an external network so Nginx can route to them.
+
+services:
+  db:
+    image: timescale/timescaledb-ha:pg16
+    restart: unless-stopped
+    # Docker's default /dev/shm is 64 MB. PostgreSQL uses POSIX shared memory for
+    # shared_buffers and per-query work segments (hash joins, sort buffers). Complex
+    # spatial queries exhaust 64 MB at runtime even though startup succeeds.
+    shm_size: '256mb'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+    volumes:
+      - /opt/agritwin-data/pgdata:/home/postgres/pgdata
+    networks:
+      - proxy
+    # Not exposed on host ports — only reachable by containers on the proxy network.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:
+      - proxy
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      # Certbot webroot for ACME challenges (certbot runs on the host, not in Docker)
+      - ./certbot/webroot:/var/www/certbot:ro
+      # Let's Encrypt certs issued by host certbot, read-only in nginx
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    networks:
+      - proxy
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+networks:
+  proxy:
+    name: infra_proxy
+    driver: bridge

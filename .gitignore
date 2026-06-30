@@ -1,2 +1,7 @@
 agriTwin-app/
 agriTwin-etl/
+.DS_Store
+
+# Production deployment — configs are committed, only secret env files are excluded
+deploy/infra/.env
+deploy/agritwin/.env.prod

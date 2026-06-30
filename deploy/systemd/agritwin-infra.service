@@ -1,0 +1,15 @@
+[Unit]
+Description=AgriTwin Shared Infrastructure (Nginx + PostgreSQL + Redis)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/agritwin/deploy/infra
+ExecStart=docker compose -p infra up -d
+ExecStop=docker compose -p infra down
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target
