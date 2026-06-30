@@ -1,0 +1,64 @@
+# AgriTwin — production Docker Compose
+# Run from the monorepo root:
+#   docker compose -p agritwin -f deploy/agritwin/docker-compose.prod.yml <command>
+#
+# Requires the "infra" compose project to be running first (provides db, redis, nginx
+# and the infra_proxy network). See deploy/infra/docker-compose.yml.
+
+services:
+  migrate:
+    build:
+      context: ../..
+      dockerfile: agriTwin-app/Dockerfile
+    image: agritwin-app:latest
+    command: /app/migrate.sh
+    restart: "no"
+    env_file: .env.prod
+    environment:
+      DATABASE_URL: "postgresql+psycopg://agritwin:${AGRITWIN_DB_PASSWORD}@infra-db-1:5432/agritwin"
+      DB_HOST: infra-db-1
+      DB_USER: agritwin
+    networks:
+      - infra_proxy
+
+  web:
+    image: agritwin-app:latest
+    command: gunicorn -c /app/gunicorn.conf.py "agritwin_app:create_app()"
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      DATABASE_URL: "postgresql+psycopg://agritwin:${AGRITWIN_DB_PASSWORD}@infra-db-1:5432/agritwin"
+      CELERY_BROKER_URL: "redis://infra-redis-1:6379/0"
+      CELERY_RESULT_BACKEND: "redis://infra-redis-1:6379/0"
+      FLASK_DEBUG: "false"
+    networks:
+      - infra_proxy
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  celery_worker:
+    image: agritwin-app:latest
+    command: >
+      celery -A agritwin_app.tasks worker
+      --loglevel=info
+      --concurrency=2
+      --max-tasks-per-child=50
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      DATABASE_URL: "postgresql+psycopg://agritwin:${AGRITWIN_DB_PASSWORD}@infra-db-1:5432/agritwin"
+      CELERY_BROKER_URL: "redis://infra-redis-1:6379/0"
+      CELERY_RESULT_BACKEND: "redis://infra-redis-1:6379/0"
+    volumes:
+      - /opt/agritwin-data/etl-processed:/agritwin-etl/data/processed:ro
+    networks:
+      - infra_proxy
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+networks:
+  infra_proxy:
+    external: true
+    name: infra_proxy
