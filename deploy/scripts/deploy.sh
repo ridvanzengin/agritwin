@@ -6,25 +6,23 @@ set -euo pipefail
 
 cd /opt/agritwin
 
+# Shorthand so every compose command gets the same env-file, project, and compose file.
+# --env-file is required for ${AGRITWIN_DB_PASSWORD} to be interpolated in docker-compose.prod.yml.
+COMPOSE="docker compose -p agritwin --env-file deploy/agritwin/.env.prod -f deploy/agritwin/docker-compose.prod.yml"
+
 echo "[deploy] Pulling latest code..."
-git pull origin main
+git pull origin master
 git -C agriTwin-app pull origin main
 git -C agriTwin-etl pull origin main
 
 echo "[deploy] Building app image..."
-docker compose -p agritwin \
-  -f deploy/agritwin/docker-compose.prod.yml \
-  build web
+$COMPOSE build migrate
 
 echo "[deploy] Running migrations..."
-docker compose -p agritwin \
-  -f deploy/agritwin/docker-compose.prod.yml \
-  run --rm migrate
+$COMPOSE run --rm migrate
 
 echo "[deploy] Restarting web and celery_worker..."
-docker compose -p agritwin \
-  -f deploy/agritwin/docker-compose.prod.yml \
-  up -d --no-deps web celery_worker
+$COMPOSE up -d --no-deps web celery_worker
 
 echo "[deploy] Done."
-docker compose -p agritwin -f deploy/agritwin/docker-compose.prod.yml ps
+$COMPOSE ps
