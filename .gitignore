@@ -1,2 +1,13 @@
 agriTwin-app/
 agriTwin-etl/
+
+# macOS
+.DS_Store
+
+# Secrets
+.claude/deploy.config
+.env
+.env.prod
+
+# Screenshot source (moved to docs/)
+Screenshot .png
