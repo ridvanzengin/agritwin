@@ -5,38 +5,20 @@ For routine code updates on an already-running server, see [Deploying Updates](#
 
 ---
 
-## 1 — SSH key for GitHub (run once on the server)
+## 1 — Clone all three repos
 
-```bash
-ssh-keygen -t ed25519 -C "ringo-deploy" -f ~/.ssh/id_ed25519 -N ""
-cat ~/.ssh/id_ed25519.pub
-```
-
-Add the printed public key to GitHub:
-- Go to GitHub → Settings → SSH and GPG keys → New SSH key
-- Title: `ringo`
-- Paste the key
-
-Verify it works:
-```bash
-ssh -T git@github.com
-# Hi ridvanzengin! You've authenticated...
-```
-
----
-
-## 2 — Clone all three repos
+All repos are public — no SSH key or authentication needed.
 
 ```bash
 mkdir -p /opt/agritwin
-git clone -b main git@github.com:ridvanzengin/agritwin.git /opt/agritwin
-git clone -b main git@github.com:ridvanzengin/agriTwin-app.git /opt/agritwin/agriTwin-app
-git clone -b main git@github.com:ridvanzengin/agriTwin-etl.git /opt/agritwin/agriTwin-etl
+git clone -b main https://github.com/ridvanzengin/agritwin.git /opt/agritwin
+git clone -b main https://github.com/ridvanzengin/agriTwin-app.git /opt/agritwin/agriTwin-app
+git clone -b main https://github.com/ridvanzengin/agriTwin-etl.git /opt/agritwin/agriTwin-etl
 ```
 
 ---
 
-## 3 — Restore ETL Parquet data
+## 2 — Restore ETL Parquet data
 
 The processed data files are NOT in git (too large). Restore from your local machine:
 
@@ -49,7 +31,7 @@ rsync -avz --progress -e "ssh -i ~/.ssh/id_ed25519_personal" \
 
 ---
 
-## 4 — Create secret env files
+## 3 — Create secret env files
 
 ```bash
 # Infra secrets (PostgreSQL superuser password):
@@ -64,7 +46,7 @@ nano /opt/agritwin/deploy/agritwin/.env.prod
 
 ---
 
-## 5 — Create data directories
+## 4 — Create data directories
 
 ```bash
 mkdir -p /opt/agritwin-data/{pgdata,etl-processed,backups}
@@ -73,7 +55,7 @@ chown -R 1000:1000 /opt/agritwin-data/pgdata  # timescaledb-ha runs as UID 1000
 
 ---
 
-## 6 — Start infra and create the database
+## 5 — Start infra and create the database
 
 ```bash
 docker compose -p infra -f /opt/agritwin/deploy/infra/docker-compose.yml up -d
@@ -90,7 +72,7 @@ SQL
 
 ---
 
-## 7 — Build image, run migrations, load data
+## 6 — Build image, run migrations, load data
 
 ```bash
 cd /opt/agritwin
@@ -107,7 +89,7 @@ docker compose -p agritwin -f deploy/agritwin/docker-compose.prod.yml run --rm l
 
 ---
 
-## 8 — Start app services
+## 7 — Start app services
 
 ```bash
 docker compose -p agritwin -f deploy/agritwin/docker-compose.prod.yml up -d web celery_worker
@@ -115,7 +97,7 @@ docker compose -p agritwin -f deploy/agritwin/docker-compose.prod.yml up -d web 
 
 ---
 
-## 9 — SSL (if domain already has an A record pointing here)
+## 8 — SSL (if domain already has an A record pointing here)
 
 ```bash
 apt-get install -y certbot
@@ -133,7 +115,7 @@ docker exec infra-nginx-1 nginx -s reload
 
 ---
 
-## 10 — Systemd auto-start
+## 9 — Systemd auto-start
 
 ```bash
 cp /opt/agritwin/deploy/systemd/agritwin-infra.service /etc/systemd/system/
