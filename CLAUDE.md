@@ -43,6 +43,58 @@ Both repos share a single PostgreSQL database (populated by ETL, read by app).
 
 ## Current phase
 
-**Phase 3 — Suitability scoring** (in progress in `agriTwin-app/`). ETL is stable; no active ETL work unless a new data source is needed.
+**Phase 5/6 complete** (`agriTwin-app/`). ETL is stable. See each sub-repo's `CLAUDE.md` for full architecture details, conventions, and phase definitions.
 
-See each sub-repo's `CLAUDE.md` for full architecture details, conventions, and phase definitions.
+---
+
+## Development workflow
+
+Follow this pipeline for every change. Never skip or reorder steps.
+
+### 1 — Branch first
+
+Before writing any code, create a feature branch in the relevant repo(s):
+
+| Repo | Default branch | Branch command |
+|---|---|---|
+| `agriTwin-app/` | `main` | `git -C agriTwin-app checkout -b feature/<slug>` |
+| `agriTwin-etl/` | `main` | `git -C agriTwin-etl checkout -b feature/<slug>` |
+| monorepo root | `master` | `git checkout -b feature/<slug>` |
+
+Use a short, lowercase, hyphenated slug that describes the change (e.g. `feature/scenario-export`, `feature/fix-mobile-layout`).
+Skip branch creation only if the user explicitly says to work directly on main/master.
+
+### 2 — Make changes and test locally
+
+- For UI/template changes: verify the page looks correct in the browser before declaring done.
+- For API/backend changes: run `pytest` inside the Docker container or venv.
+- For ETL changes: spot-check Parquet output or DB row counts.
+
+### 3 — Ask for approval before committing
+
+Show a concise diff summary (files changed, what changed and why), then ask:
+**"Commit these changes? (yes / no)"**
+
+Do not commit until the user confirms.
+
+### 4 — Ask for approval before pushing
+
+After committing, show the commit(s) that will be pushed and ask:
+**"Push to origin? (yes / no)"**
+
+Do not push until the user confirms.
+
+### 5 — Ask for approval before deploying
+
+After the branch is merged to main, ask:
+**"Deploy to production? (yes / no)"**
+
+If yes, use the `/deploy` skill — it handles SSH, streaming output, and error reporting.
+Never deploy a feature branch directly; only deploy from main.
+
+### Rules
+
+- **Never commit, push, or deploy without explicit user approval for each step.**
+- **Never force-push.**
+- **Never commit secret files** (`.env`, `.env.prod`, `.claude/deploy.config`, etc.).
+- One logical change per commit; write the commit message in imperative mood (`fix:`, `feat:`, `docs:`).
