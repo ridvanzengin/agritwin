@@ -5,3 +5,6 @@ agriTwin-etl/
 # Production deployment — configs are committed, only secret env files are excluded
 deploy/infra/.env
 deploy/agritwin/.env.prod
+
+# Local Claude Code config — server connection details, never commit
+.claude/deploy.config
