@@ -1,0 +1,38 @@
+# Template for adding a second app to this VM.
+# Copy to app2.conf (or name it after your actual app), update the server_name
+# and proxy_pass target, then reload nginx:
+#   docker exec infra-nginx-1 nginx -s reload
+
+server {
+    listen 80;
+    server_name app2.yourdomain.com;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# server {
+#     listen 443 ssl;
+#     server_name app2.yourdomain.com;
+#
+#     ssl_certificate     /etc/letsencrypt/live/app2.yourdomain.com/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/app2.yourdomain.com/privkey.pem;
+#     ssl_protocols       TLSv1.2 TLSv1.3;
+#     ssl_ciphers         HIGH:!aNULL:!MD5;
+#
+#     location / {
+#         # Container name pattern: <compose-project>-<service>-1
+#         proxy_pass         http://app2-web-1:5000;
+#         proxy_set_header   Host $host;
+#         proxy_set_header   X-Real-IP $remote_addr;
+#         proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header   X-Forwarded-Proto $scheme;
+#         proxy_read_timeout 120s;
+#         client_max_body_size 10M;
+#     }
+# }

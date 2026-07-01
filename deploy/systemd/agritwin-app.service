@@ -1,0 +1,15 @@
+[Unit]
+Description=AgriTwin Application (Flask + Celery)
+After=agritwin-infra.service
+Requires=agritwin-infra.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/agritwin
+ExecStart=docker compose -p agritwin -f deploy/agritwin/docker-compose.prod.yml up -d web celery_worker
+ExecStop=docker compose -p agritwin -f deploy/agritwin/docker-compose.prod.yml down
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target
