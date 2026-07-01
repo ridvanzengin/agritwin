@@ -4,7 +4,7 @@ An agricultural digital twin for Konya Province, Turkey. Integrates satellite, c
 
 ![AgriTwin Field Explorer](docs/screenshot.png)
 
-**[Live Demo →](http://167.233.143.105)**
+**[Live Demo →](http://agritwin.online)**
 
 ## Features
 
