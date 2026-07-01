@@ -1,5 +1,7 @@
 agriTwin-app/
 agriTwin-etl/
+
+# macOS
 .DS_Store
 
 # Production deployment — configs are committed, only secret env files are excluded
@@ -8,3 +10,6 @@ deploy/agritwin/.env.prod
 
 # Local Claude Code config — server connection details, never commit
 .claude/deploy.config
+
+# Screenshot source (moved to docs/)
+Screenshot .png
