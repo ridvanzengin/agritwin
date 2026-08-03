@@ -1,18 +1,32 @@
 # Gunicorn config for agriTwin web service.
 #
-# Worker formula: (2 × OCPUs) + 1
+# Worker formula: min((2 × OCPUs) + 1, 3) processes, 4 threads each.
 #
-#   1 OCPU / 6 GB RAM  → workers=3, threads=2  (~360 MB peak with preload)
-#   4 OCPU / 24 GB RAM → workers=9, threads=2
+# The original (2×OCPUs)+1 formula (still workers=9 on this box's 4 OCPUs)
+# assumed a dedicated Postgres instance. In production this app shares a
+# connection-constrained TimescaleDB instance with another app
+# (max_connections=25 total -- see SERVER_SETUP.md), and each gunicorn
+# WORKER PROCESS opens its own SQLAlchemy pool (agritwin_app/db/session.py)
+# -- more processes means more independent pools competing for the same
+# tiny connection budget. This was the actual cause of two separate
+# "remaining connection slots reserved for SUPERUSER" production incidents:
+# the first (see post_fork below) was a fork-safety bug that leaked
+# connections outright; even after fixing that, 9 correctly-bounded pools
+# still added up to more baseline idle connections than the shared instance
+# could spare on a low-traffic app where most pooled connections, once
+# opened, rarely get reused often enough to hit pool_recycle.
 #
-# The app is Postgres I/O-bound, not CPU-bound. gthread worker class lets each
-# worker handle concurrent requests without spawning extra processes.
+# The app is Postgres I/O-bound, not CPU-bound (gthread worker class) --
+# trading worker processes for threads doesn't cost concurrency, since
+# threads within one process share a single pool instead of each opening
+# their own. Capped at 3 processes regardless of OCPU count, with more
+# threads per process to compensate.
 
 import multiprocessing
 
-workers = (2 * multiprocessing.cpu_count()) + 1
+workers = min((2 * multiprocessing.cpu_count()) + 1, 3)
 worker_class = "gthread"
-threads = 2
+threads = 4
 bind = "0.0.0.0:5000"
 timeout = 120
 graceful_timeout = 30
